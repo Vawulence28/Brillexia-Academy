@@ -32,8 +32,9 @@ class ParentService {
     return res.rows;
   }
 
-  async getChildDashboard(parentId, studentId) {
-    // 1. Verify this student belongs to the parent
+  async getChildDashboard(userId, studentId) {
+    const parentId = await this.getParentIdByUserId(userId);
+
     const verifyRes = await db.query(
       `SELECT * FROM ba_parent_students WHERE parent_id = $1 AND student_id = $2`,
       [parentId, studentId]
@@ -42,7 +43,7 @@ class ParentService {
       throw { statusCode: 403, message: 'Unauthorized access to this student profile.' };
     }
 
-    // 2. Fetch student profile details
+    // 3. Fetch student profile details
     const studentRes = await db.query(
       `SELECT s.*, u.first_name, u.last_name, u.email, u.phone 
        FROM ba_students s JOIN ba_users u ON s.user_id = u.user_id 
@@ -50,7 +51,7 @@ class ParentService {
       [studentId]
     );
 
-    // 3. Fetch assignments safely without sub.status
+    // 4. Fetch assignments safely without sub.status
     const assignmentsRes = await db.query(
       `SELECT a.*, c.title AS course_title, sub.submission_id, sub.grade, sub.file_url, sub.submitted_at
        FROM ba_assignments a
@@ -61,7 +62,7 @@ class ParentService {
       [studentId]
     );
 
-    // 4. Fetch lessons and courses...
+    // 5. Fetch lessons and courses...
     const lessonsRes = await db.query(
       `SELECT l.*, iu.first_name AS instructor_first, iu.last_name AS instructor_last, c.title AS course_title
        FROM ba_lessons l

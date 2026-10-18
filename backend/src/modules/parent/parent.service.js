@@ -29,7 +29,7 @@ class ParentService {
        WHERE ps.parent_id = $1 AND ps.verified = TRUE`,
       [parentId]
     );
-    return res.rows;
+    return res.rows || [];
   }
 
   async getChildDashboard(userId, studentId) {
@@ -43,7 +43,6 @@ class ParentService {
       throw { statusCode: 403, message: 'Unauthorized access to this student profile.' };
     }
 
-    // 3. Fetch student profile details
     const studentRes = await db.query(
       `SELECT s.*, u.first_name, u.last_name, u.email, u.phone 
        FROM ba_students s JOIN ba_users u ON s.user_id = u.user_id 
@@ -51,7 +50,6 @@ class ParentService {
       [studentId]
     );
 
-    // 4. Fetch assignments safely without sub.status
     const assignmentsRes = await db.query(
       `SELECT a.*, c.title AS course_title, sub.submission_id, sub.grade, sub.file_url, sub.submitted_at
        FROM ba_assignments a
@@ -62,7 +60,6 @@ class ParentService {
       [studentId]
     );
 
-    // 5. Fetch lessons and courses...
     const lessonsRes = await db.query(
       `SELECT l.*, iu.first_name AS instructor_first, iu.last_name AS instructor_last, c.title AS course_title
        FROM ba_lessons l
@@ -83,10 +80,10 @@ class ParentService {
     );
 
     return {
-      profile: studentRes.rows[0],
-      assignments: assignmentsRes.rows,
-      upcomingLessons: lessonsRes.rows,
-      enrolledCourses: coursesRes.rows
+      profile: studentRes.rows[0] || null,
+      assignments: assignmentsRes.rows || [],
+      upcomingLessons: lessonsRes.rows || [],
+      enrolledCourses: coursesRes.rows || []
     };
   }
 
@@ -103,7 +100,7 @@ class ParentService {
        WHERE l.student_id = $1 ORDER BY l.scheduled_start DESC`,
       [studentId]
     );
-    return res.rows;
+    return res.rows || [];
   }
 
   async getChildAttendance(userId, studentId) {
@@ -119,7 +116,7 @@ class ParentService {
        WHERE l.student_id = $1 ORDER BY l.scheduled_start DESC`,
       [studentId]
     );
-    return res.rows;
+    return res.rows || [];
   }
 
   async getChildResults(userId, studentId) {
@@ -134,7 +131,7 @@ class ParentService {
        WHERE sub.student_id = $1 AND sub.grade IS NOT NULL ORDER BY sub.submitted_at DESC`,
       [studentId]
     );
-    return res.rows;
+    return res.rows || [];
   }
 
   async getChildCertificates(userId, studentId) {
@@ -146,7 +143,7 @@ class ParentService {
        JOIN ba_courses c ON cert.course_id = c.course_id WHERE cert.student_id = $1`,
       [studentId]
     );
-    return res.rows;
+    return res.rows || [];
   }
 }
 

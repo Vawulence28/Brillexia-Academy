@@ -23,9 +23,10 @@ export default function ParentDashboard() {
     if (user && user.role === 'PARENT') {
       apiRequest('/parent/children')
         .then((res) => {
-          setChildren(res.data);
-          if (res.data.length > 0) {
-            setSelectedChildId(res.data[0].student_id);
+          const list = res.data || [];
+          setChildren(list);
+          if (list.length > 0) {
+            setSelectedChildId(list[0].student_id);
           }
         })
         .catch((err) => setError(err.message))
@@ -37,7 +38,7 @@ export default function ParentDashboard() {
     if (selectedChildId) {
       setLoading(true);
       apiRequest(`/parent/children/${selectedChildId}/dashboard`)
-        .then((res) => setChildData(res.data))
+        .then((res) => setChildData(res.data || null))
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
     }
@@ -94,7 +95,7 @@ export default function ParentDashboard() {
               <Card>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Assignments Graded</h3>
                 <p className="text-2xl md:text-3xl font-bold text-[#142B55] mt-2">
-                  {childData.assignments?.filter(a => a.grade !== null).length || 0} / {childData.assignments?.length || 0}
+                  {(childData.assignments || []).filter(a => a.grade !== null).length} / {(childData.assignments || []).length}
                 </p>
               </Card>
               <Card>
@@ -106,7 +107,7 @@ export default function ParentDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <Card>
                 <h3 className="text-base md:text-lg font-bold text-[#142B55] mb-4">Upcoming Sessions</h3>
-                {childData.upcomingLessons?.length === 0 ? (
+                {(!childData.upcomingLessons || childData.upcomingLessons.length === 0) ? (
                   <p className="text-xs md:text-sm text-slate-500 py-4 text-center">No upcoming lessons scheduled.</p>
                 ) : (
                   <div className="space-y-3">
@@ -123,14 +124,14 @@ export default function ParentDashboard() {
 
               <Card>
                 <h3 className="text-base md:text-lg font-bold text-[#142B55] mb-4">Recent Instructor Lesson Reports</h3>
-                {childData.lessonReports?.length === 0 ? (
+                {(!childData.lessonReports || childData.lessonReports.length === 0) ? (
                   <p className="text-xs md:text-sm text-slate-500 py-4 text-center">No lesson reports available yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {childData.lessonReports.map((r) => (
-                      <div key={r.report_id} className="p-4 rounded-lg border border-slate-200">
-                        <h4 className="font-semibold text-[#142B55] text-sm md:text-base">{r.lesson_title} • Topic: {r.topic_covered}</h4>
-                        <p className="text-xs text-slate-600 mt-1">Instructor: {r.instructor_first} {r.instructor_last} • Comprehension: {r.comprehension_rating}/5</p>
+                      <div key={r.report_id || r.lesson_id} className="p-4 rounded-lg border border-slate-200">
+                        <h4 className="font-semibold text-[#142B55] text-sm md:text-base">{r.lesson_title} • Topic: {r.topic_covered || 'General'}</h4>
+                        <p className="text-xs text-slate-600 mt-1">Instructor: {r.instructor_first} {r.instructor_last} • Comprehension: {r.comprehension_rating || 'N/A'}/5</p>
                         {r.homework_assigned && (
                           <p className="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-md border border-slate-200 mt-2">
                             <strong>Homework:</strong> {r.homework_assigned}

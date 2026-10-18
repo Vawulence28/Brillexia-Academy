@@ -79,11 +79,30 @@ class ParentService {
       [studentId]
     );
 
+    const reportsRes = await db.query(
+      `SELECT lr.*, l.title AS lesson_title, iu.first_name AS instructor_first, iu.last_name AS instructor_last
+       FROM ba_lesson_reports_extended lr
+       JOIN ba_lessons l ON lr.lesson_id = l.lesson_id
+       JOIN ba_instructors i ON l.instructor_id = i.instructor_id
+       JOIN ba_users iu ON i.user_id = iu.user_id
+       WHERE l.student_id = $1
+       ORDER BY lr.created_at DESC`,
+      [studentId]
+    ).catch(() => ({ rows: [] }));
+
+    const certificatesRes = await db.query(
+      `SELECT cert.*, c.title AS course_title FROM ba_certificates cert
+       JOIN ba_courses c ON cert.course_id = c.course_id WHERE cert.student_id = $1`,
+      [studentId]
+    ).catch(() => ({ rows: [] }));
+
     return {
       profile: studentRes.rows[0] || null,
       assignments: assignmentsRes.rows || [],
       upcomingLessons: lessonsRes.rows || [],
-      enrolledCourses: coursesRes.rows || []
+      enrolledCourses: coursesRes.rows || [],
+      lessonReports: reportsRes.rows || [],
+      certificates: certificatesRes.rows || []
     };
   }
 
